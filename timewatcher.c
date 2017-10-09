@@ -11,7 +11,7 @@ void update_clock(struct timespec* prev, struct timespec* curr, clockid_t mode) 
 
 void check_clock(struct timespec* prev, struct timespec* curr, const char* desc) {
     if (curr->tv_sec < prev->tv_sec || (curr->tv_sec == prev->tv_sec && curr->tv_nsec < prev->tv_nsec)) {
-        fprintf(stderr, "%s time wend backwards!!!\n", desc);
+        fprintf(stderr, "%s time went backwards!!!\n", desc);
         fprintf(stderr, "  was: %ld.%06ld\n", (long)prev->tv_sec, (long)prev->tv_nsec);
         fprintf(stderr, "  now: %ld.%06ld\n", (long)curr->tv_sec, (long)curr->tv_nsec);
     }

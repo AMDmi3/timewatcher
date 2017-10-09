@@ -2,23 +2,38 @@
 #include <time.h>
 #include <unistd.h>
 
+void update_clock(struct timespec* prev, struct timespec* curr, clockid_t mode) {
+    prev->tv_sec = curr->tv_sec;
+    prev->tv_nsec = curr->tv_nsec;
+
+    clock_gettime(mode, curr);
+}
+
+void check_clock(struct timespec* prev, struct timespec* curr, const char* desc) {
+    if (curr->tv_sec < prev->tv_sec || (curr->tv_sec == prev->tv_sec && curr->tv_nsec < prev->tv_nsec)) {
+        fprintf(stderr, "%s time wend backwards!!!\n", desc);
+        fprintf(stderr, "  was: %ld.%06ld\n", (long)prev->tv_sec, (long)prev->tv_nsec);
+        fprintf(stderr, "  now: %ld.%06ld\n", (long)curr->tv_sec, (long)curr->tv_nsec);
+    }
+}
+
 int main(void) {
-    struct timespec tp, prev_tp;
-    clock_gettime(CLOCK_MONOTONIC, &prev_tp);
+    struct timespec monotonic_prev;
+    struct timespec monotonic_curr;
+    struct timespec realtime_prev;
+    struct timespec realtime_curr;
+
+    update_clock(&monotonic_prev, &monotonic_curr, CLOCK_MONOTONIC);
+    update_clock(&realtime_prev, &realtime_curr, CLOCK_REALTIME);
 
     while (1) {
-        usleep(1000);
+        usleep(10000);
 
-        clock_gettime(CLOCK_MONOTONIC, &tp);
+        update_clock(&monotonic_prev, &monotonic_curr, CLOCK_MONOTONIC);
+        update_clock(&realtime_prev, &realtime_curr, CLOCK_REALTIME);
 
-        if (tp.tv_sec < prev_tp.tv_sec || (tp.tv_sec == prev_tp.tv_sec && tp.tv_nsec < prev_tp.tv_nsec)) {
-            fprintf(stderr, "Monotonic time wend backwards!!!\n");
-            fprintf(stderr, "  was: %ld.%06ld\n", (long)prev_tp.tv_sec, (long)prev_tp.tv_nsec);
-            fprintf(stderr, "  now: %ld.%06ld\n", (long)tp.tv_sec, (long)tp.tv_nsec);
-        }
-
-        prev_tp.tv_sec = tp.tv_sec;
-        prev_tp.tv_nsec = tp.tv_nsec;
+        check_clock(&monotonic_prev, &monotonic_curr, "monotonic");
+        check_clock(&realtime_prev, &realtime_curr, "realtime");
     }
 
     return 0;
